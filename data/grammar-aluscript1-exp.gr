@@ -1,0 +1,115 @@
+<start> ::= <atom-list> EOI.
+
+<atom-list> ::= <atom> <atom-list>
+               | <atom>.
+
+<atom> ::=   FILE
+           | SHELL
+           | OUTPUT
+           | COMMENT
+           | EOL
+           | <macro-call>
+           | <command-call> 
+           | <macro-def>
+           | <var-def>
+           | <func-def>
+           | <for-stmt>
+           | <for-stmt-step>
+           | <if-stmt>
+           | <if-then-stmt>.
+
+<macro-call>   ::=   MACRONAME LP <macro-args> RP
+                     | MACRONAME LP RP.
+
+<macro-args>   ::=   <macro-args> <macro-sep> <value>
+                     | <value>.
+<macro-sep> ::= SEP | EOL SEP.
+
+<command-call> ::= <keyword-list> EOL.
+
+<keyword-list> ::=   <keyword-list> KEYWORD
+                   | <keyword-list> OPMULT
+                   | <keyword-list> STRING
+                   | KEYWORD 
+                   | OPMULT
+                   | STRING.
+
+<macro-def>    ::= MACRO MACRONAME <atom-list> ENDMACRO MACRONAME.
+
+
+; 
+  Note for the keyword in the assignment.
+  The assigned entity can be either:
+   - a keyword (variable),
+   - a function, with n variables,
+   - a keyword with substitutions: #-substitutions, and '...'-substitutions.
+   
+  The <literal> can be:
+   - a number,
+   - a "..."-string, $"..."-string or *"..."-string, possibly with '...'-substitutions,
+   - an expression.
+;
+<func-def>     ::=   LP KEYWORD LP <func-args> RP ASSIGN <expr> RP
+                     | LP KEYWORD LP <func-args> RP ASSIGN LP <expr> FUNCSEP <expr-list> RP RP.
+<var-def>      ::= LP KEYWORD ASSIGN <value> RP.
+<value>        ::= STRING | <expr>.
+<expr>         ::=   <expr> OPPLUS <term>
+                   | <expr> OPMINUS <term>
+                   | <term> .
+<term>         ::= <term> OPMULT <factor> 
+                   | <term> OPDIV <factor>
+                   | <factor>.
+<factor>       ::= OPMINUS <element> | OPPLUS <element> | <element>.
+<element>      ::=   NUMBER
+                   | KEYWORD
+                   | <func-call>
+                   | LP <expr> RP.
+<func-call>    ::= KEYWORD LP <expr-list> RP.
+<expr-list> ::=   <expr-list> FUNCSEP <expr>
+                     | <expr>.
+
+<func-args>    ::=   <func-args> FUNCSEP KEYWORD
+                   | KEYWORD.
+
+<for-stmt>     ::= FOR KEYWORD ASSIGN <expr> TO <expr> DO <atom-list> ENDDO.
+<for-stmt-step>::= FOR KEYWORD ASSIGN <expr> STEP <expr> TO <expr> DO <atom-list> ENDDO.
+
+<if-close>     ::= IF | IFDEFINED | IFNOTDEFINED | IFASCIIFILE.
+<if-then-stmt> ::= <if-close> LP <expr> RP THEN <atom-list> <if-alternative>.
+<if-stmt>      ::= <if-close> LP <expr> RP <atom-list> <if-alternative>.
+<if-alternative> ::= ENDIF | ELSE <atom-list> ENDIF.
+
+
+EOL         ::= /\n/.
+FILE        ::= /@"[^"]*"/.
+SHELL       ::= /![^\n]*\n/.
+OUTPUT      ::= /##[^\n]*\n/.
+COMMENT     ::= /#[^\n]*\n/.
+MACRONAME   ::= /[a-zA-Z0-9_][a-zA-Z0-9_\/]*.mac/.
+MACRO       ::= /MACRO/.
+ENDMACRO    ::= /ENDMACRO/.
+LP          ::= /\(/.
+RP          ::= /\)/.
+ASSIGN      ::= /=($|\*|%|@)?/.
+NUMBER      ::= /([0-9]+|([0-9]+.[0-9]*)|([0-9]*.[0-9]+))(e(\+?|-)?[0-9]+)?/.
+STRING      ::= /"[^"]*"/.
+IF          ::= /IF/.
+IFDEFINED   ::= /IFDEFINED/.
+IFNOTDEFINED::= /IFNOTDEFINED/.
+IFASCIIFILE ::= /IFASCIIFILE/.
+THEN        ::= /THEN/.
+ELSE        ::= /ELSE/.
+ENDIF       ::= /ENDIF/.
+FOR         ::= /FOR/.
+STEP        ::= /STEP/.
+;EQUAL       ::= /=/.;
+TO          ::= /TO/.
+DO          ::= /DO\("[^"]*"\)/.
+ENDDO       ::= /ENDDO\("[^"]*"\)/.
+SEP         ::= /;/.
+FUNCSEP     ::= /,/.
+KEYWORD     ::= /[a-zA-Z_'.%\[\]][a-zA-Z0-9_'.#%\[\]]*/.
+OPPLUS     ::= /\+/.
+OPMINUS    ::= /-/.
+OPMULT     ::= /\*/.
+OPDIV      ::= /\//.

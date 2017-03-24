@@ -1,0 +1,3 @@
+IF(arg1)THEN
+  add field1 field2 result
+ENDIF

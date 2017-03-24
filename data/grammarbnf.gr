@@ -1,0 +1,32 @@
+TERM ::= /[
+-A-Z0-9]+/ .           ; A terminal is a upper case name ;
+NONTERM ::= /<[-a-z0-9]+>/ .      ; A non terminal is a lower case name enclosed in <...> ;
+DEFOP ::= /::=/ . 
+EOR ::= /\./ .                     ; The End Of Rule definition marquer ;
+PIPE ::= /\|/ .
+REGEX ::= /\/([^\/]|(\\\/))+\// . ; Each terminal is defined by a
+                                    regex over the set of chars ;
+
+<start> ::= <def-list> EOI .       ; A grammar is a list of rules ;
+<def-list> ::=   <def-list> <def>
+               | <def> .
+
+
+; A definition is either a rule definition, or a ;
+; terminal definition. ;
+<def> ::=   TERM DEFOP REGEX EOR
+          | NONTERM DEFOP <alt-list> EOR . 
+
+
+; The rhs of a grammar production rule is a liste ;
+; of alternatives. ;
+<alt-list> ::=   <alt-list> PIPE <concat>  
+               | <concat> .                
+
+
+; Each alternative is a sequence of symbols. ;
+<concat> ::=   <concat> <sym>              
+             | <sym> .
+
+
+<sym> ::= TERM | NONTERM .

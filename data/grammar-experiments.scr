@@ -1,0 +1,116 @@
+<start> ::= <stmt-list> EOI .
+
+<stmt-list> ::= <stmt> <stmt-list> | <stmt> .
+
+
+<stmt> ::=  <assigment> ROW-SEP
+          | <filter-clause> ROW-SEP.
+
+<assignment> ::= <qualified-identifier> ASSIGN <filter-clause>.
+
+<filter-clause> ::=  <filter-clause> PIPE <bool-clause>
+                   | <bool-clause>.
+
+<filter-clause-list> ::=  <filter-clause> COL-SEP <filter-clause-list>
+                        | <filter-clause>.
+
+<bool-clause> ::=  <comp-clause> AND <bool-clause>
+                 | <comp-clause> OR  <bool-clause>
+                 | <comp-clause> XOR <bool-clause>
+                 | NOT <bool-clause>.
+              
+
+<comp-clause> ::=  <term-clause> EQ  <comp-clause>
+                 | <term-clause> NEQ <comp-clause>
+                 | <term-clause> LEQ <comp-clause>
+                 | <term-clause> GEQ <comp-clause>
+                 | <term-clause> LESS    <comp-clause>
+                 | <term-clause> GREATER <comp-clause>
+                 | <term-clause>.
+
+<term-clause> ::=  <factor-clause> PLUS  <term-clause>
+                 | <factor-clause> MINUS <term-clause>
+                 | <factor-clause>.
+
+<factor-clause> ::=  <array-slicing> DIV  <factor-clause>
+                   | <array-slicing> MULT <factor-clause>
+                   | <array-slicing>.
+
+<array-slicing> ::= <atom> LSB <dimension-definition> RSB.
+
+<atom> ::=   STRING-LITERAL
+         | INT-LITERAL
+         | FLOAT-LITERAL
+         | SYMBOL-LITERAL
+         | LP <filter-clause> RP
+         | <qualified-identifier>
+         | <list-definition>
+         | <dictionary-definition>
+         | <array-definition>
+         | <function-call>
+         | <function-definition>.
+
+<function-definition> ::= FUNCTION LP <qualified-identifier-list> RP LCB <stmt-list> RCB.
+
+<function-call> ::= <qualified-identifier> LP <filter-clause-list> RP.
+
+<qualified-identifier> ::=  IDENTIFIER
+                          | IDENTIFIER SCOPE <qualified-identifier>.
+
+<qualified-identifier-list> ::=   <qualified-identifier>
+                                | <qualified-identifier-list> COL-SEP <qualified-identifier>.
+
+<dictionary-definition> ::= DICT.
+<list-definition> ::= LIST.
+<array-definition> ::= LSB <row-list> RSB.
+
+<row-list> ::=   <filter-clause-list>
+              | <filter-clause-list> ROW-SEP <row-list>.
+
+
+COMMENT        ::= /#[^\n]*\n/.
+STRING-LITERAL ::= /'([^\\']|(\\')*)'/.
+INT-LITERAL    ::= /-?[0-9]+/.
+FLOAT-LITERAL  ::= /([0-9]+|([0-9]+.[0-9]*)|([0-9]*.[0-9]+))(e(\+?|-)?[0-9]+)?/.
+SYMBOL-LITERAL ::= /:[a-zA-Z_][a-zA-Z0-9_]*/.
+
+LP  ::= /\(/.
+RP  ::= /\)/.
+RCB ::= /{/.
+LCB ::= /}/.
+RSB ::= /\[/.
+LSB ::= /\]/.
+
+GREATER ::= />/.
+LESS    ::= /</.
+LEQ     ::= /<=/.
+GEQ     ::= />=/.
+NEQ     ::= /!=/.
+EQ      ::= /==/.
+
+PLUS  ::= /\+/.
+MINUS ::= /-/.
+
+MULT ::= /\*/.
+DIV  ::= /\//.
+
+SCOPE      ::= /::/.
+IDENTIFIER ::= /[a-zA-Z_][a-zA-Z0-9_]*/.
+
+ROW-SEP ::= /;;/.
+COL-SEP ::= /,/.
+
+PIPE ::= /\|/.
+
+OR  ::= /or/.
+XOR ::= /xor/.
+AND ::= /and/.
+NOT ::= /not/.
+
+FUNCTION ::= /function/.
+DICT     ::= /dict/.
+LIST     ::= /list/.
+
+EOS    ::= /;;/.
+ASSIGN ::= /=/.
+

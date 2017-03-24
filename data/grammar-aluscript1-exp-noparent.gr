@@ -1,0 +1,35 @@
+<start> ::= <atom-list> EOI.
+
+<atom-list> ::=  <atom> <atom-list>
+               | <atom>.
+
+
+<atom> ::=   COMMENT | FILE | PARENT | SHELL | KEYWORD | <macro-call>.
+
+<macro-call> ::= <macro-name> PARENT.
+<macro-name> ::= MMACRO-NAME | GMACRO-NAME | LMACRO-NAME.
+
+COMMENT ::= /#[^\n]*\n/.
+FILE    ::= /@"[^"]*"/.
+SHELL   ::= /![^\n]*\n/.
+PARENT  ::= /\([^)]*\)/.
+
+
+FOR ::= /FOR/.
+TO  ::= /TO/.
+DO ::= /DO\("[^"]*"\)/.
+ENDDO ::= /ENDDO\("[^"]*"\)/.
+
+IF ::= /IF/.
+THEN ::= /THEN/.
+ELSE ::= /ELSE/.
+ENDIF ::= /ENDIF/.
+
+EQUAL ::= /=/.
+SEP   ::= /;/.
+
+MMACRO-NAME ::= /M[_a-zA-Z0-9]*\.mac/.
+GMACRO-NAME ::= /[^_][_a-zA-Z0-9\/]*\.mac/.
+LMACRO-NAME ::= /_[_a-zA-Z0-9\/]*\.mac/.
+
+KEYWORD ::= /[a-zA-Z0-9_][a-zA-Z0-9_.*]*/.

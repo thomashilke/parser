@@ -1,0 +1,12 @@
+account ubs1:  Compte Campus UBS
+account ubs2:  Compte Courant UBS
+account bcvP:  Portfolio bcv
+account bcvCP: Compte Portfolio bcv
+account bcv:   Compte Courant bcv
+account post:  Compte de cheque postal
+
+transaction<assurance,mobiliere,prime> 16.60 from post to 'Mobiliere Assurance' on 27.01.2014: Prime d'assurance complementaire janvier 2014.
+transaction<fitness,sport> 120.00 from post on 01.10.2014: Inscription au centre sportif.
+transaction<fitness,sport> 129.00 from post to 'Fitness Park Malley' from 01.04.2014 each month: Ordre permanant pour l'inscription au fitness.
+transaction<voiture,essence> 80.01 from post on 15.01.2014.
+transaction<epfl,salaire> 4100.00 from 'EPFL' to post from 15.11.2013 every month: Salaire d'assistant doctorant EPFL.

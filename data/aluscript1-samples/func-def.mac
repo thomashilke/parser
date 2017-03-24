@@ -1,0 +1,7 @@
+(p(x,y) = 4)
+(p(x,y) = onuhe)
+
+(h(x,y) = a*b-c/-d+3)
+(f(x,y,z) = sin(x))
+(g(x,y,z) = (a, b, c))
+(h(x,y,z) = (sin(x*y), cos(a-b)))

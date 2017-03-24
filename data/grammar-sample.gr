@@ -1,0 +1,6 @@
+INT   ::= /[1-9][0-9]+/ .
+COMMA ::= /,/ .
+
+<start> ::= <int-list> EOI .
+<int-list> ::= INT COMMA <int-list>
+               | INT.

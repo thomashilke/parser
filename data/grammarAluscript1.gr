@@ -1,0 +1,48 @@
+<start> ::= <atom-list> EOI.
+
+<atom-list> ::= <atom> <atom-list>
+               | <atom>.
+
+<atom> ::=   KEYWORD
+          | FILE
+          | SHELL
+          | OUTPUT
+          | COMMENT
+          | <macro-def>
+          | <var-def>
+          | <if-stmt>
+          | <for-stmt>
+          | <macro-call>.
+<macro-def> ::= MACRO KEYWORD <atom-list> ENDMACRO KEYWORD.
+<var-def> ::= LP KEYWORD ASSIGN <literal> RP.
+<if-stmt> ::= IF LP <expr> RP THEN <atom-list> ENDIF.
+<for-stmt> ::= FOR KEYWORD EQUAL <expr> TO <expr> DO <atom-list> ENDDO.
+<macro-call> ::= KEYWORD LP <macro-args> RP | KEYWORD LP RP.
+<macro-args> ::= KEYWORD
+                | KEYWORD SEP <macro-args>.
+<literal> ::= NUMBER | STRING.
+
+<expr> ::= DUMMY.
+DUMMY ::= /expr/.
+
+KEYWORD  ::= /[a-zA-Z_]+/.
+FILE     ::= /@"[^"]*"/.
+SHELL    ::= /![^\n]*\n/.
+OUTPUT   ::= /##[^\n]*\n/.
+COMMENT  ::= /#[^\n]*\n/.
+MACRO    ::= /MACRO/.
+ENDMACRO ::= /ENDMACRO/.
+LP       ::= /\(/.
+RP       ::= /\)/.
+ASSIGN   ::= /=($*%@)?/.
+NUMBER   ::= /[1-9]+[0-9]*/.
+STRING   ::= /"[^"]*"/.
+IF       ::= /IF/.
+THEN     ::= /THEN/.
+ENDIF    ::= /ENDIF/.
+FOR      ::= /FOR/.
+EQUAL    ::= /=/.
+TO       ::= /TO/.
+DO       ::= /DO\("[^"]*"\)/.
+ENDDO    ::= /ENDDO\("[^"]*"\)/.
+SEP      ::= /;/.

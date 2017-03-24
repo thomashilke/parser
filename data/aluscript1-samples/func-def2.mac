@@ -1,0 +1,9 @@
+# This expression is misparsed. The lexer start to parse '/u',
+# think that it is a MACRONAME, but fail when the next char is hit ')',
+# and revert back to the previous match, which was '/'. But in the
+# process, the character inbetween 'u' has been eaten, and is lost.
+# TODO: Correct that.
+(exp_2(x,u)=(x-u)/u)
+
+# This one is correctly parsed:
+(exp_2(x,u)=(x-u)/ u)

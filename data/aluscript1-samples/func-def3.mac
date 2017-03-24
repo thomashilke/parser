@@ -1,0 +1,10 @@
+# The '/249' could be parsed as a macro name, but
+# the '.mac' is missing. This cause the '249' to be dropped.
+# TODO: Fix this, but this is the same bug as in func-def2.mac
+# WORKAROUND: prevent the MACRONAME to begin with a '/'
+(XXX_tab_0= txmin + (tk-1) * (txmax-txmin ) /249 )
+
+# Actually, this one will passe the tokenization, but the '/249'
+# will be dropped: (see with -t)
+(XXX_tab_0= txmin + (tk-1) * (txmax-txmin )*oue/249 )
+

@@ -1,0 +1,184 @@
+bath = load('dbfile_alumin', 'bath');
+bath::concentration = load('dbfile_alumin', 'bath', 'c');
+
+bath_center = bath.boundary 
+               / keep(function(normals){ dot(normals,[0,0,1]) < 0 });
+               / translate([0,0, acd/2 ]);
+bath_center::concentration = interpolate(bath::concentration, bath_center);
+bath_center::nodes / transform(function(x){[1,0,0; 0,1,0]*x});
+iso_concentration = contours(bath_center::concentration,
+                             linspace(min(bath::concentration),
+                                      max(bath::concentration),
+                                      10))
+plot('graph/concentration.gnuplot', bath::concentration,
+                                    iso_concentration);
+
+
+# Dimensions broadcasting:
+
+# Structures pattern matching:
+
+# Function closures:
+
+# Symbols manipulation:
+
+# Fundamental types: arrays of (int, float, bool), list, dictionary, structure:
+
+# Loopless iterations:
+
+simulation_step = function()
+
+lazy_range(0, n_max, 1) / map()
+
+
+# Implementation of alumin module:
+
+alumin_problem_init = function(mesh)
+{
+  context = dict{};
+  context::mesh = mesh;
+
+  # No specific boundary conditions needed, since dot(u,n) = 0.
+  boundary_conditions = dict{
+    dirichlet = dict{code  = make_point_field(mesh, 0),
+                     value = make_point_field(mesh, 0)},
+
+    neumann   = dict{code  = make_point_field(mesh, 0),
+                     value = make_point_field(mesh, 0)}
+  }; 
+  
+  # Setup matrices for each subproblem:
+  context::particles_matrix
+   = build_convection_diffusion_matrix(mesh, boundary_conditions, params::cd::u, params::cd::particle);
+  
+  context::concentration_matrix
+   = build_convection_diffusion_matrix(mesh, boundary_conditions, params::cd::u, params::cd::concentration);
+  
+  context::temperature_matrix
+   = build_convection_diffusion_matrix(mesh, boundary_conditions, params::cd::u, params::cd::temperature);
+
+  # Setup initial conditions:
+  context::particles     = make_point_field(mesh, [params::num::n_rayons], 0);
+  context::concentration = make_point_field(mesh, params::init::concentration);
+  context::temperature   = make_point_field(mesh, params::init::temperature);
+  
+  # Setup source terms:
+  context::joule_temperature_source = ;
+  context::electrolysis_concentration_sink = ;
+
+  context;
+}
+
+alumin_problem_step = function(context, current_time, params)
+{
+  # Define the rhs of each equation:
+  particles_rhs = params::num::time_step 
+                    * params::runtime::alumin_injection(current_time) 
+                  + context::particles;
+
+  concentration_rhs = params::num::time_step 
+                        * context::electrolysis_concentration_sink
+                      + context::concentration;
+
+  temperature_rhs = params::num::time_step 
+                      * alumin_heating_temperature_sink(params::runtime::alumin_injection(current_time))
+                    + params::num::time_step 
+                      * context::joule_temperature_source
+                    + context::temperature;
+
+  context::particles = solve(context::particles_matrix, particle_rhs);
+  context::particles = particle_dissolution(context::particles, concentration_rhs, temperature_rhs);
+  
+  context::concentration = solve(context::concentration_matrix, concentration_rhs);
+  context::temperature   = solve(context::temperature_matrix, temperature_rhs);
+
+  context::concentration = solve(context::concentration_matrix, concentration_rhs)
+
+  context;
+}
+
+alumin_init_params() = function()
+{
+  ...
+}
+
+make_alumin_publisher = function(params)
+{
+  callbacks = list{};
+
+  # We publish only a subset of the simulation state.
+
+  # At each timestep:
+  #  - {avg,min,max} of {np, c, T} on the bath.
+
+  push(callbacks, function(context){
+    record = dict{};
+    record::np_min = min(context::particles);
+    record::np_max = max(context::particles);
+    record::np_avg = mean(context::particles, context::mesh);
+
+    record::c_min = min(context::concentration);
+    record::c_max = max(context::concentration);
+    record::c_avg = mean(context::concentration, context::mesh);
+
+    record::T_min = min(context::temperature);
+    record::T_max = max(context::temperature);
+    record::T_avg = mean(context::temperature, context::mesh);
+
+    record;
+  })
+
+  # Every minute of simulation time, we publish:
+  #  - {np, c, T} on {a surface at dx = 1cm of the interface}
+
+  # Extract the interpolation surface:
+  ...
+
+  push(callback, function(context, time){
+    record = dict{}
+
+    record::time = time;
+    record::surface = surface
+
+    record::particles = interpolate(context::particles, context::mesh, surface);
+    record::concentration = interpolate(context::concentration, context::mesh, surface);
+    record::temperature = interpolate(context::temperature, context::mesh, surface);
+
+    record;
+  })
+
+
+  function(context, current_timestep)
+  {
+    # the actual publisher.
+    open('data/simulation/solution.dat') / write(callback[0](context)) / close();
+
+    if(mod(current_timestep * params::num::delta_t, 10.) < params::num::delta_t)
+    {
+      open('data/simulation/integrals.dat') / write(callback[1](context)) / close();
+    }
+  }
+}
+
+
+main = function()
+{
+  params = alumin_init_params();
+  context = alumin_problem_init();
+  publish = make_alumin_publisher();
+
+
+  current_time = params::num::t_begin;
+  current_timestep = 0;
+  while(current_time + params::num::delta_t < params::num::t_end)
+  {
+    publish(context, current_timestep);
+
+    current_time += params::num::delta_t;
+    current_timestep += 1;
+
+    context = alumin_problem_step(context, current_time, params);
+  }
+}
+
+main();

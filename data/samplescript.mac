@@ -1,0 +1,648 @@
+; This is a sample of the syntax of the aluscript language ;
+
+;
+  The formal grammar is:
+
+  <start> := <stmt>+ $
+  <stmt>  := FLOW | <expr>
+  <expr>  := STRING | REAL | SYMBOL | ( <expr>* )
+
+  where 
+  STRING := \"[^\"]\"
+  REAL   := -?([0-9]+|([0-9]+.[0-9]*)|([0-9]*.[0-9]+))?(e(\\+?|-)?[0-9]+)?
+  SYMBOL := [-a-zA-Z0-9_`&@$%^&,.:!?|\\[\\]{}<>+=*/\\\\]+]+
+  FLOW   := #[^\\n]*\n
+;
+
+; 
+  We need to specify the way an Aluscript program is interpreted.
+  At the syntactic level, this is pretty simple: the core language is
+  made of nested sexpr. An sexpr is either an atom (string, number, symbol)
+  or a list of sexpr.
+  - An atom evaluate to itself.
+  - An sexpr evaluate according to the following rules:
+    If it is empty, evaluate to itself, but if not, evaluate the first 
+    element of the list.
+    If it evaluate to a 
+      1/ special form, pass all the arguments to the form untouched.
+         The form evaluate to the value returned by the form.
+      2/ lambda, evaluate every arguments, and pass the result to the lambda.
+         The lambda evaluate to the result of the function.
+      3/ macro, expand the macro with the argument unevaluated, and execute the code
+         generated.
+    If it is something else (a variable...), then error.
+
+  Ok, now we need to design a class hierarchy to implement the evaluation mechanism.
+  First of all, everything is an sexpr. Then, an sexpr is either:
+  - A cons cell,
+  - a symbol, nil, string, number
+  
+  /!\ One should probably distinguish between constant values and variable references...
+  An atom evaluates to a constant value, but a symbol evaluates to the associated variable.
+
+  Then, each fundamental datatypes can be a const or a reference. This is probably the right
+  place to use a proxy.
+;
+
+
+; Types: real, string, symbol, list, lambda, cons-cell ;
+
+(setq a 42)
+(setq b "hello world")
+(setq c (quoted d))
+
+
+; Special forms: defmacro, defvar, defun, let, lambda, cond, loop, ... ;
+(define (quoted f) (lambda (x) (begin (* x x))))
+(let ((a 12) (b "hello"))
+     (begin
+     (print b)
+     (print a)))
+
+; A library of standard functions ;
+(sin pi)
+(strcat "hello" "world")
+(let ((file (open "test.txt")))
+
+     (write file "hello world"))
+(debug)
+
+
+; 
+  Now that we have a proof of concept that it is possible to
+  define a language and implement it, we need to state
+  clearly the aspect where  the AlucellMacro language falls
+  short, to come up with a design which, at least, solve them.
+  
+  This is a list of facts that makes things hard when working
+   with AlucellMacro:
+  1/  No notion of scope:
+       + every structure modifies the global namespace,
+       + internal details of every structure must be known to:
+         - ensure that its use does not perturb what happens
+           next,
+         - how its behaviour depends on the environment.
+       + no prohibition of side effects allows everyone to
+         break the work of everyone,
+       + prevent unit testing: unit tested componant breaks
+          when used in situation.
+
+  2/  Side effect of algorithms and macros not documented,
+      and not apparent in the syntax,
+
+  3/  Dependency of the algorithm on the entire environment
+      (see #1).
+
+  4/  No clue of the semantic of each macro/command arguments
+      (see #2):
+       + is it a prefix, a return value, a parameter?
+       + what should it represent? it's 'type'?
+
+  5/  Input of source of program hard-coded (case.dat +
+      data/_*.mac + macros/*/*.mac):
+       + where macro definition should provide a mean of
+         abstraction, there is no possibility to substitute
+         transparently a macro for another, without the caller
+         to notice,
+       + Heterogeneity of the call and naming conventions
+         (_*.mac in data/, */*.mac in macros/,
+         and MACRO M*.mac transcripted to a file in TMP/,
+         then read from there).
+       + Branch to REPL require blank case.dat! why not by a
+         switch, or simply no case.dat?
+
+  6/  Error messages cryptics, no real indication of the
+      place where the error happend, who generated it, and no
+      diagnostic.
+
+  7/  No proper REPL:
+       + no error recovery,
+       + no inspection of the environment.
+
+  8/  Stiff syntax (white spaces mandatory or prohibited in
+      strange places, no newlines allowed in macro call
+      arguments):
+       + No line-feed in macro call,
+       + No white spaces around parents in variable
+         affectation,
+       + No white space in front of comments,
+       + No white space in FOR and IF initialisation and
+         conditions,
+       + No parameter substitution in macro call.
+
+  9/  No notion of return value, prevent functional
+      programing constructions.
+
+  10/ Non uniformity of variable treatment according to
+      their 'type' (string in arguments of macro,)
+       + passing string as arguments: =* .
+
+  11/ Strong dependency of the various parts of a program,
+      due to the variable names sementic, the mechanisme of
+      argument substitution, keyword construction. Prevent
+      unit testing:
+       + names construction depends on dieze, number length
+         and fortran format,
+       + variable association as name concatenation,
+       + side variable %PFX_% pollute the namespace, and 
+         should be reset each time used,
+       + no recursivity in the name construction:
+         #() construct forbidden in macro calls.
+
+  12/ No data structure, or any mean to emulate one
+       + special cases implemented as Alucell commands
+         (controls),
+       + arrays of variable implemented as names with
+         substitution: array#i .
+
+  13/ No file input/output mechanism.
+
+  14/ Comment formally unusable as comment to desactivate
+      code. No block comments.
+       + comments cannot be placed anywhere: they should be
+         at begining of line,
+       + comments are still subject to inplace substitution:
+         ARG_XX and VAL_, INT_, CC_. Hence comments cannot
+         resonably be used to desactivate code.
+       + Special comments act as terminal echo:
+         ##. Cannot comment comments.
+
+  15/ Inhomogeneity of arguments interface with the
+      algorithms, and macro (alias, %PFX_*%, getkeyword,
+      argument order and number)
+       + No naming of the arguments: ARG_XX,
+       + Aliasing mechanisme serves as argument naming,
+       + Most Alucell command access their argument by name
+         substitution: "%PFX_*%*",
+       + Alucell environment uses getkeyword, and takes
+         advantages of alias substitution and keyword #() 
+         substitution.
+
+  16/ Inhomogeneity of variable affectation:
+       + (* =* *),
+       + (* =$ *),
+       + (* =% *),
+       + (* =$*#*),
+       + (* ="*"),
+       + etc.
+
+  17/ Mathematical expressions not part of the macro
+      language:
+       + require two distinct interpreter and API.
+
+  18/ Inhomogeneity of Alucell commands and macro calls:
+       + Command: <cmd-name> <arg1> <arg2> ...,
+       + Macro:   <macro-name> ( <arg1> <semi-colon> <arg2> 
+                  <semi-colon> ... ).
+
+  19/ Terminal output strange and too stiff:
+       + Only through ## text,
+       + unusable for debugging.
+
+  20/ Variable conversion (VAL_, INT_, CC_) to text too stiff
+       + can happen anywhere, not only in terminal outputs,
+       + depends on external variable for formatting
+         (Int_format, Int_format_ln, etc).
+
+  21/ Absurde limitation in handling strings (white space,
+      length) and variable names (length).
+
+  22/ No check of the number of argument to a macro/command
+      passed:
+       + in the call,
+       + in the argument substitution (ARG_XX).
+
+  23/ No way to generate documentation automatically (lack of
+      centralized documentation):
+       + Absolutly no enforcment to document the code or the
+         structures.
+
+  24/ No way to syntax check before actual execution.
+
+  25/ No way to abstract behaviour, and replace or customize
+      behaviour by the user of elements:
+       + due to side effects,
+       + due to hard coded input source,
+       + lack of return value.
+
+  26/ No notion of namespace:
+       + global namespace name collision,
+       + origin and authors of symbols.
+
+  27/ No strong constraint on the code layout, documentation
+      and organization (lead to heterogeneity of the 
+      implementation methods due to many-non-communicating-
+      users, lack of documentation):
+       + see python for example: tab syntax enforce correct
+         indentation,
+       + elisp force some documentations as part of the 
+         language syntax and semantic,
+       + web programming language, coffe-script,
+       + Even doxygen could be used.
+
+  28/ No execution warnings, which could point out sementic
+      errors (unused variable, shadowed bindings, etc)
+
+  29/ No strict BNF grammar, which prevent the possibility
+      of building a syntax tree, which would allow compilation
+      and transformation to any other structure, analysis,
+      check, comparison, etc.
+
+  30/ <whatever I can think of>
+
+  Now we can write a cahier des charges. In my opinion, the
+  most important points to solve are:
+  #1:  no notion of scope,
+  #2:  side effect only based language,
+  #3:  dependency of the algorithm on the entire environment,
+  #9:  no notion of return statment,
+  #11: strong interdependency of every parts of a program,
+  #23+27: never ever see any extensive documentation...
+
+  The possible way to solve these issues is an open question,
+  but we can distinguish several stategies for each
+  individual points:
+   + do not change the syntax, but slightly modify the
+     sementic,
+   + slightly extend the syntax, while keeping the sementic,
+   + reform the syntax, but keep the sementic,
+   + reform the syntax, reform the sementic.
+  Every change must be made under the constraint that the 
+  totality of the legacy script code must be runable, and
+  yield the same result, modulo bugfixes, or at least 
+  compilable to the new syntax.
+
+  My opinion is that the current aluscript suffer a lack of
+  self-similarity, and a load of adhoc quirk hack: The set
+  of rules needed to evaluate an aluscript program is far 
+  too large. The lack of self similarity prevent to build 
+  software componant in a recursive manner, and to build
+  arbitrary many layers of abstraction. This is only related
+  to the syntax. Also, the lack of return notion lead to a
+  proliferation of temporary variables.
+
+  To solve this point require a new syntax. 
+
+  The other point is that, due to the peculiar development
+  model of this code (non-communicating-agents-through-time)
+  one absolutly need three features:
+   + Unit testing,
+   + Strong abstaction,
+   + Extensive documentation,
+  The unit testing support the fact that the services provided
+  by the componant work as advertized by the documentation,
+  and can be used reliably without digging into the
+  implementation details.
+
+  The notion of documentation can be formalized to some
+  extents, to be able to deduce automatically if it is
+  sufficient or not, and review it quickly. A subset of the 
+  unit tests may also be part of the documentation, as an
+  illustration of the service provided.
+
+  Strong abstraction means that the behaviour of a componant
+  depends on a limited set of parameter or environment, which
+  is locally made explicit by the syntax. A direct consequence
+  is that it simplify the writing of unit tests.
+
+  Let's discuss a proposition which attempt to address these
+  issues:
+   + side effects by argument only
+   + mean of abstraction is the function definition, and the
+     definition of componant as a set of function and data 
+     structures.
+   + Documentation of each exposed symbol by a componant is
+     made mandatory by the syntax which define them.
+     For functions, behaviour, signification of arguments,
+     communication (input only, output only, both..),
+     return values and error states. Like in elisp.
+   + scopes and contexts are pushed by various structures:
+      - cond, let, while, block, defmacro, defun, set, etc
+        push new scopes
+      - function evaluation pushes new scope
+      - macro expansion and evaluation is not clear.
+   + every expression has a value and type.
+   + namespaces are quite orthogonal to the scope system.
+     But not exactly: every function is bound to a symbol in
+     the global namespace. This can lead to name collisions,
+     since there are many functions and many users.
+     Instead, whe could organize the global namespace as
+     a hierarchy of buckets which holds bound symbols.
+     
+     More than a naming convention, this would allow
+     importation of symbol under the current scope, and 
+     renaming them.
+     
+     Each namespace should be documented, and a list of the
+     symbol it contains should be made avaliable.
+
+  These prescription solves the issues #1, #2 and #3 from the
+  introduction of scopes, #9 form the fact that every
+  expression has a value, and #23+27 from the enforcment of
+  the documentation in the syntax.
+
+  From the syntaxe point of view, any syntax which is
+  parsable to a list structure would do the trick. (See 
+  Mathematica fullform and inputform) Lisp showed that from
+  a list and a small set of rules for evaluation, one can
+  get a full-featured language.
+  Due to the necessity to rewrite the parser and the
+  interpreter, this solve most issues, and the remaining ones
+  depends on the sementic which is associated. 
+
+  In case the syntax is reformed, one must provide a strategy
+  to allow evaluation of legacy code. This can be done by:
+   + Keeping the legacy interpreter,
+   + translating the code.
+
+  Keeping the legacy interpreter is the simplest solution,
+  but, as a consequence, interaction with legacy code is
+  null, while translating the code require more work, if 
+  even doable:
+   + rewrite a lexer/parser for the legacy syntax. This is by
+     far the worst task, due to the unstructured nature of
+     the code accepted by the legacy parser. Maybe one can
+     assume that the code repository uses only a subset of
+     the accepted input, and one can ignore the singular
+     aspects,
+   + read the legacy source code and translate it to the new
+     syntaxe, check the access to the variables,
+   + check that the results are the same.
+  
+  Now, I should say a few words to motivate all this work,
+  because it is not only sufficient to list what is bad,
+  but it is important to state in which aspects life will be
+  easier:
+   + first of all, the development workflow will be
+     simplified by the more precise error reports, the
+     step-by-step execution, variable inspection, and 
+     debugging,
+
+   + Reusability of code and componant, because their impact
+     will be clearly made apparent by the syntax to use them,
+     because their behaviour will be garantied and fully
+     documented,
+
+   + The volume of code will be reduced, because of the
+     improved reusability. This would also reduce the
+     maintenance cost,
+
+   + Functionalities and componants would not diffuse into the
+     limbo after their author left the lab, because of the
+     abstraction and documentation,
+
+   + Code review would be simplified, since the apparition
+     of new symbols, new componants, new documentation pieces
+     would show up clearly in generated code reports.
+     Rapid actions can be undertaken to avoid duplication of
+     functionalities, fitness to the coding guidelines,
+     choices of symbol names, lack in documentation, bad
+     design choices, directly with the author while it's
+     still fresh,
+
+   + Program analysis and instrumentation (performances
+     measurments, call graph, code coverage, automatic
+     documentation generation, execution summary to attach to
+     each simulation result for later review, compilation and
+     traduction, code dependency graph, memory consumption,
+     etc., static code analysis),
+
+   + Interpreter structure (lexer->parser->syntaxe tree->
+     tree visitor sementic evaluation) makes improvments
+     easy to implement. Would allow evolution of the language
+     itself easy when one feel the need. (new datatypes,
+     builtin functions, syntax constructs, syntaxic sugar,
+     source code processing - automatic indentation and
+     formatting, etc),
+
+   + Would allow easier interaction with the interpreter from
+     outer space: remote monitoring, introspection, graphical
+     interface, mail notifications
+
+   + Concurrent execution supported by language primitives?
+
+   + Simulation parameters and result would be simplified:
+      - keep track of the scripts and parameters which
+        produce some results,
+      - launch simulation on set of parameters, sweep ranges,
+        etc,
+      - parameter set inheritance.
+
+   + A well-designed framework (development rules and tools)
+     force everyone to produce higher quality assets, because
+     it forces to dissociate the work from its author to make
+     it the property of the framework, and to release the
+     author from it's ownership.
+     A code which runs without warnings is garantied to by
+      - provied documentation data for each componant which
+        require it,
+      - is well indented and laid out,
+
+     And the reviewer can check that:
+      - the design,
+      - the symbol names,
+      - the documentation 
+      meet the requirements, or request improvement or
+      modifications.
+;
+
+;
+  Now, here is a exerpt of the corresponding code which
+  solve the problem of convection:
+
+  (namespace 'convection
+    (defun build-convection-matrix (mesh
+                                    dirichlet-boundary-nodes
+                                    dirichlet-boundary-values)
+    
+    )
+    (defun convection-step (initial-conditions
+                            source-term
+                            dirichlet-boundary-nodes
+                            dirichlet-boundary-values
+                            timestep
+                            convection-matrix)
+    )
+    (let (numerical-params (make-dict))
+         (physical-params (make-dict))
+         (model-params (make-dict))
+      (build-)
+    ))
+;
+
+;
+  Hum, obviously a lisp-like syntax, while really convenient
+  to evaluate, is too verbose and too homogeneous to be 
+  efficient for prototyping, experimenting and understanding
+  what is the purpose of the code.
+  Instead, one should think of a syntax which is parsable to
+  a list structure, but doesn't look like so. 
+
+  This seems more reasonable:
+
+  convection::build-rhs = function(uPrev, source,
+                                   domain, 
+                                   parameters) -> rhs
+  {
+    rhs = (parameters.deltat * source + uPrev)
+          * fem::phiIntegral(source, domain)
+  }
+
+  convection::build-matrix = function(domain,
+                                      convectionVelocity,
+                                      parameters) -> matrix
+  {
+    matrix = parameters.deltat    * fem::phiphiIntegral(domain)
+             + convectionVelocity * fem::phigradphiphiIntegral(domain)
+  }
+
+  convection::step = function(uPrev, dbc, source,
+                              convection-matrix,
+                              parameters)
+                     -> uNext
+  {
+    rhs = fem::build-rhs(uPrev, source, parameters)
+    uNext = alglin::solve(convection-matrix, rhs)
+  }
+
+  convection::build-domain = function(mesh, convectionVelocity) -> domain
+  {
+    domain = [mesh: mesh]
+
+    < Build the dirichlet boundary conditions on the 
+      inflow boundary: >
+    boundary = mesh::extract-boundary(domain.mesh)
+    boundaryNormals = mesh::compute-mesh-normals(boundary)
+    boundaryBarycenters = mesh::compute-barycenter(boundary)
+    velocity-on-boundary = field::restrict(mesh,
+                                           convectionVelocity,
+                                           boundary)
+    velocity-at-barycenter = field::interpolate(boundary,
+                                                velocity-on-boundary,
+                                                boundaryBarycenters)
+    inflow-elements = boundaryNormals * velocity-at-barycenter > 0.
+    domain.dirichlet-boundary = mesh::keep(boundary,
+                                           inflow-elements)
+  }
+
+  convection::parameters = [deltat: 0.1,
+                            tend: 10.]
+
+  myMesh = [nodes: ...,
+            elements: ...,
+            material-id: ...]
+
+  myDomain = utils::build-domain(myMesh, convectionVelocity)
+  myDomain.dirichlet-boundary-values 
+    = field::extend(myDomain.dirichlet-boundary,
+                    field::make-node-field(myDomain.dirichlet-boundary,
+                                           function(x,y,z) 
+                                           -> f {f = 0.}),
+                    myDomain.mesh,
+                    0.)
+
+  convectionVelocity 
+    = field::make-node-field(myDomain.mesh,
+                             function(x,y,z) -> f
+                             { f = [0., 0., -1.] })
+  source
+    = field::make-node-field(domain.mesh,
+                             function(x,y,z) -> f)
+                             { f = 0. })
+  
+  convectionMatrix 
+    = convection::build-matrix(myDomain,
+                               convectionVelocity,
+                               convection::parameters)
+
+  initialCondition = field::make-node-field(domain.mesh,
+                                            function(x,y,z) -> f 
+                                            { f = 0.})
+
+  export = post-processing::make-exporter(['time,
+                                           'uPrev, 
+                                           'utils::integrate(myMesh, uPrev),
+                                           'utils::min(uPrev),
+                                           'utils::max(uPrev)])
+
+  uPrev = initialCondition            
+  time = convection::parameters.tstart
+  while(time < convection::parameters.tend)
+  {
+    time = time + convection::parameters.deltat
+    uPrev 
+      = convection::step(uPrev,
+                         myDomain.dirichlet-boundary-value,
+                         source,
+                         convectionMatrix,
+                         convection::parameters)
+    export()
+  }
+  export(uPrev, "results/convection.h5")
+
+
+  Notice a few features that have been introduced for
+  convenience:
+   - new dictionary type ([sym: value, ...])
+     and array ([1, 2, 3, ...])
+   - named return values
+   - namespaces for symbols (namespace::symbol)
+   - automatic broadcasting for array-array operations
+   - coherent data are grouped into structures.
+   - late evaluation (quoting and late evaluation)
+
+  One very cool thing that is not implemented by this 
+  syntax is the multiple return value of a function,
+  and a syntaxic sugar to compose function call, to bind
+  return values to each argument of the exterior call.
+  We need a syntaxe to bind the return values to the
+  arguments.
+  A function definition is:
+
+    function(<arg-list>) -> (<arg-list>) { <statments> }
+  
+  and if a symbol 'fun' evaluate to a function, it is
+  called:
+
+    fun ( <arg-list> )
+
+  and the return value list is assigned like this:
+
+    ( <sym-list> ) = fun ( <arg-list> ) .
+
+  One could define a syntax to do the mapping between
+  the rhs and the lhs, using the named 'fun' return variable.
+  Let the function fun be defined as:
+
+    fun = function(arg1, arg2) -> (ret1, ret2) { <stmt-list> }
+  
+  then, one could call it with the following syntax:
+  
+    {ret1, ret2}fun(arg1Value, arg2Value)
+
+  which would evaluate to a comma-separated list of two elements,
+  where the first return value is mapped to the first element, 
+  and the second to the second element.
+
+  One could insert other values in the list, if needed:
+  
+    {1, ret1, "hello", ret2}fun(arg1Value, arg2Value)
+
+  which would evaluate to a comma-separated list of four elements.
+
+  The content of a function call is a comma separated list, and
+  nesting of comma-separated list is equavalent to the flattened
+  version. This allow to concatenate the arguments.
+  For example, one could write:
+
+  result, six = { f1Ret1, 6 }fun1( 1, 2, { f2Ret1, 3, f2Ret2 }fun2( 4, 5 ) )
+  
+  where fun1 is evaluated with the arguments
+
+    1, 2, f2Ret1, 3, f2Ret2
+
+  This is a bit of a mix of the python's and matlab syntaxes.
+    
+  
+
+;

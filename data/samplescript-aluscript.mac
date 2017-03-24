@@ -1,0 +1,152 @@
+
+;; Read some common environment parameter:
+(read-config-file './config.mac')
+
+;; Read a mesh from the disk:
+(setq mesh (read-mesh 'data/square-mesh.msh'))
+
+;; Build an initial condition for the solution:
+(defun const-value (x) 1)
+(setq initial-condition (const-value (struct-get mesh 'vertices)))
+
+
+import mesh
+
+include ./config.mac
+
+class DiffusionSolver
+  initialize(mesh, dirichlet_boundary, neuman_boundary, d)
+    diffusion_coefficient = d
+    matrix = initialize_matrix(mesh)
+    a = 
+    d = 0
+    linear_system = build_2nd_order_linear_system(matrix, mesh, a, b, c, d)
+  end
+
+  deinitialize()
+  
+  end
+end
+
+mesh = mesh::load_from_file('mesh.msh')
+build_mesh_attributes(mesh)
+mesh_boundary = build_mesh_boundary(mesh)
+
+diffusion_linear_system = build_linear_system()
+
+initial_condition = 1. * ones(size(mesh.vertices)[1:1])
+
+
+
+Typed command like language: A program is a list of command calls. So
+everything is a function call, even function, variable and class declarations.
+All arguments are evaluated by default, grouping commands is done with {},
+and evaluation is prevented by $.
+
+Command calls are separated by ';' (ie optionnal at the end of the last command of a list.)
+
+Fundamental types are double, string, functions, type,
+logical, symbol, int, [vector/list/collection/dictionary], [macro]. For [...], the syntaxe
+is still not clear.
+
+Some arguments can be used to pass strings as mandatory code documentation, which can be
+collected, and typesetted separatly.
+
+
+import 'finite_elements.mac'
+
+var my_var 17.9;
+
+var my_func {func 
+"my_func arg1(double) arg2(double) arg3(double): 
+  if arg1 is strictly smaller than arg2, return arg3. If not,
+  return -arg3.
+
+  This function has no other purpose than giving an example of
+  a function declaration."
+${
+  pop arg1;
+  pop arg2;
+  pop arg3;
+
+  if ${< arg1 arg2}
+    ${arg3}
+  else
+    ${- arg3};
+}};
+
+
+var my_class {class {
+  method a_simple_method ${
+    pop arg1;
+    pop arg2;
+    pop arg3;
+
+    # Do something...
+    arg3;
+  };
+
+  method init ${
+    member a 0.;
+    member diffusion_coefficient 0.1;
+  }
+};
+
+var my_instance {new my_class arg1 arg2 arg3};
+my_instance::a_simple_method 1.0 'hello' [1, 2, 3];
+
+
+var simulation_parameters {new parameter_set 'params.init'};
+simulation_parameters::set 'deltat' 0.1;
+
+
+
+-------------
+Same idea, but 
+
+
+import 'finite_elements.mac'
+
+var my_var 17.9
+
+var my_func {func 
+"my_func arg1(double) arg2(double) arg3(double): 
+  if arg1 is strictly smaller than arg2, return arg3. If not,
+  return -arg3.
+
+  This function has no other purpose than giving an example of
+  a function declaration."
+${
+  pop arg1;
+  pop arg2;
+  pop arg3;
+
+  if ${< arg1 arg2}
+    ${arg3}
+  else
+    ${- arg3};
+}};
+
+
+var my_class {class {
+  method a_simple_method ${
+    pop arg1;
+    pop arg2;
+    pop arg3;
+
+    # Do something...
+    arg3;
+  };
+
+  method init ${
+    member a 0.;
+    member diffusion_coefficient 0.1;
+  }
+};
+
+var my_instance {new my_class arg1 arg2 arg3};
+my_instance::a_simple_method 1.0 'hello' [1, 2, 3];
+
+
+var simulation_parameters {new parameter_set 'params.init'};
+simulation_parameters::set 'deltat' 0.1;

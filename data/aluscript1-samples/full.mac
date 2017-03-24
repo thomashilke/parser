@@ -1,0 +1,41 @@
+arithn mesh field function_name
+# A comment.
+
+# A second comment.
+
+rm aoueth*
+rm oneuhu
+
+ensight add cubeb_vitess return
+@"filename.dat"
+
+## Output on the stdout
+! echo shell command
+(var=34)
+(restart=0)
+(file="source.mac")
+
+FOR i TO n DO("random bytes")
+  (it=i)
+ENDDO("random bytes, fin")
+
+IF(arg1)THEN
+  add field1 field2 result
+ELSE
+  IF(arg2)THEN
+    subx field3 field4 result
+  ENDIF
+ENDIF
+
+IF(arg1)THEN
+  add field1 field2 result
+ELSE
+  subx field1 field2 result
+ENDIF
+
+IF(arg1)THEN
+  add field1 field2 result
+ENDIF
+call_a/macro.mac ( arg; arg )
+
+

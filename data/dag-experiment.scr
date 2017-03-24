@@ -1,0 +1,16 @@
+
+mesh = load_mesh('bath');
+dt = 1;
+
+alumin_stepper = dag {
+  t(): 0 {};
+  particle_source(t): {
+    mass_per_injection = 17;
+    
+  }
+
+  particles(t, particle_source): ...{
+    rhs = Fes::ConvDiff::build_rhs(mesh, particles, particle_source, dt);
+    particles = LinearSolver::gmres(particles_fes, rhs);
+  }
+}

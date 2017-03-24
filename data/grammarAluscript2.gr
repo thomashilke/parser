@@ -1,0 +1,64 @@
+; Aluscript2 terminal symbols ;
+
+MARKER     ::= /./ .
+EQUAL      ::= /=/ .
+FUNCTION   ::= /function/ .
+LP         ::= /(/ .
+RP         ::= /)/ .
+TO         ::= /->/ .
+LCB        ::= /{/ .
+RCB        ::= /}/ .
+LB         ::= /[/ .
+RB         ::= /]/ .
+COMMA      ::= /,/ .
+STRING     ::= /"[^"]*"/ .
+NUMBER     ::= /[1-9][0-9]*/ .
+IDENTIFIER ::= /[a-zA-Z][a-zA-Z0-9]+/ .
+SCOPE      ::= /::/ .
+
+
+; Aluscript2 grammar production rules ;
+
+<start>     ::= <stmt-list> EOI .
+<stmt-list> ::=   <stmt-list> <stmt>
+                | <stmt> .
+
+<stmt>      ::=   <assignment> MARKER
+                | <expr> MARKER .
+
+<assignment>   ::= <comma-separated-expr> EQUAL <comma-separated-expr> .
+
+<function-def> ::= FUNCTION  <arg-list>
+                   TO <arg-list>
+                   LCB <arg-list> RCB .
+
+<arg-list>     ::=   LP <comma-separated-identifier> RP
+                   | LP RP .
+
+<comma-separated-identifier> ::=  <comma-separated-identifier> IDENTIFIER
+                                  | IDENTIFIER .
+
+<function-call> ::= LCB <comma-separated-expr> RCB 
+                    <qualified-identifier> 
+                    LP <comma-separated-expr> RP .
+
+<comma-separated-expr> ::=   <comma-separated-expr> COMMA <expr>
+                           | <comma-separated-expr> <function-call>
+                           | <expr> .
+
+<expr> ::= <function-def>
+           | STRING
+           | NUMBER
+           | <qualified-identifier>
+           | <dict-def>
+           | <array-def> .
+
+<array-def> ::= LB <comma-separated-expr> RB .
+<dict-def>  ::= LB <key-value-list> RB .
+
+<key-value> ::= IDENTIFIER EQUAL <expr> .
+<key-value-list> ::= <key-value-list> <key-value>
+                     | <key-value> .
+
+<qualified-identifier> ::= IDENTIFIER
+                           | IDENTIFIER SCOPE <qualified-identifier> .

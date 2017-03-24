@@ -1,0 +1,7 @@
+IF(arg1)THEN
+  add field1 field2 result
+ELSE
+  IF(arg2)THEN
+    subx field3 field4 result
+  ENDIF
+ENDIF

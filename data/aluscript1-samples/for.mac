@@ -1,0 +1,4 @@
+FOR abracadabra = 1 TO 17+18 DO("random bytes")
+  testkeyword commandcall
+ENDDO("random bytes, fin")
+
