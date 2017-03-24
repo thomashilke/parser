@@ -289,7 +289,7 @@ class AstRuleBuilder: public AstTreeVisitorI {
              ++sym_name) {
           std::map<std::string, Symbol>::iterator sym(symbols.find(*sym_name));
           if (sym != symbols.end())
-            alt_symbol_list[std::distance(sym_name, alt->begin())] = sym->second;
+            alt_symbol_list.at(std::distance(sym_name, alt->begin())) = sym->second;
           else
             throw std::string("generateGrammar() - undefinded symbol name: ")
                 + *sym_name;

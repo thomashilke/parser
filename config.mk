@@ -1,6 +1,6 @@
 CXX = g++
 DEPS_BIN = g++
-CXXFLAGS = -g -std=c++11
+CXXFLAGS = -g -std=c++03
 LDFLAGS = -g
 AR = ar
 ARFLAGS = rc
@@ -11,14 +11,15 @@ INCLUDE_DIR = include/
 LIB_DIR = lib/
 
 
-SOURCES = 
+SOURCES = src/pgtool.cpp src/parser/parser.cpp src/regex/regex.cpp src/regex/regexparser.cpp
+
 
 HEADERS = 
 
-BIN = 
+BIN = bin/pgtool
 
 
-#bin/...: ...
+bin/pgtool: build/src/pgtool.o build/src/parser/parser.o build/src/regex/regex.o build/src/regex/regexparser.o
 
 LIB = 
 
