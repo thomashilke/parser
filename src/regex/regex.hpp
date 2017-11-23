@@ -1,5 +1,5 @@
-#ifndef _REGEX_H_
-#define _REGEX_H_
+#ifndef _MYREGEX_H_
+#define _MYREGEX_H_
 
 #include <iostream>
 #include <fstream>
@@ -58,4 +58,4 @@ bool match_regex_longest(regex& r,
                          std::string& token,
                          unsigned int& tokenId);
 
-#endif /* _REGEX_H_ */
+#endif /* _MYREGEX_H_ */
