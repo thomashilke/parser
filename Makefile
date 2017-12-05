@@ -25,12 +25,12 @@ $(OBJECTS): build/%.o: %.cpp
 $(DEPS): build/%.deps: %.cpp
 	@echo "[DEPS]" $@
 	@$(MKDIR) $(MKDIRFLAGS) $(dir $@)
-	@$(DEPS_BIN) -std=c++11 -MM -MT build/$*.o $< > $@
-	@$(DEPS_BIN) -std=c++11 -MM -MT build/$*.deps $< >> $@
+	@$(DEPS_BIN) $(DEPSFLAGS) -MM -MT build/$*.o $< > $@
+	@$(DEPS_BIN) $(DEPSFLAGS) -MM -MT build/$*.deps $< >> $@
 
 $(BIN): bin/%:
 	@echo "[LD]  " $@
-	@$(CXX) $(LDFLAGS) -o $@ $^
+	@$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(LIB): lib/%:
 	@echo "[AR]  " $@

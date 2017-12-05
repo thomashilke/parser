@@ -6,7 +6,7 @@
 #include <iterator>
 #include <map>
 
-#include "../parser/parser.hpp"
+#include "../parser/lr_parser.hpp"
 
 namespace regexSymbols
 {
