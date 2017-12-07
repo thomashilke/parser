@@ -1,7 +1,7 @@
 #ifndef _PARSEFUNCTIONS_H_
 #define _PARSEFUNCTIONS_H_
 
-#include "parser.hpp"
+#include "lr_parser.hpp"
 
 #include "../utils/string_builder.hpp"
 

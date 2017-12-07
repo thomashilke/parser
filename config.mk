@@ -1,7 +1,7 @@
-CXX = clang++
+CXX = g++
 DEPS_BIN = g++
 DEPSFLAGS = -I$(HOME)/.local/include
-CXXFLAGS = -g -std=c++14 -Wall -Wextra -I$(HOME)/.local/include
+CXXFLAGS = -g -std=c++1y -Wall -Wextra -I$(HOME)/.local/include
 LDFLAGS = -g -Wall -Wextra -L$(HOME)/.local/lib
 LDLIBS =  -llexer
 AR = ar
@@ -14,13 +14,18 @@ BIN_DIR = bin/
 INCLUDE_DIR = include/
 LIB_DIR = lib/
 
+PKG_NAME = parser
+
 
 SOURCES = src/pgtool.cpp src/regex/regex.cpp src/regex/regexparser.cpp \
 	test/cf_grammar.cpp test/lr_parser.cpp test/parse_input.cpp test/parse_input_to_tree.cpp \
 	test/grammar_experiment.cpp
 
 
-HEADERS = 
+HEADERS = include/parser/parser.hpp \
+          include/parser/parser/cf_grammar.hpp \
+	  include/parser/parser/lr_parser.hpp \
+          include/parser/parser/parse_input.hpp
 
 BIN = bin/test_cf_grammar bin/test_lr_parser bin/test_parse_input bin/test_parse_input_to_tree bin/grammar_experiment
 

@@ -12,7 +12,7 @@ all: $(BIN) $(LIB) $(HEADERS)
 
 -include $(DEPS)
 
-$(HEADERS): include/lexer/%: src/%
+$(HEADERS): include/$(PKG_NAME)/%: src/%
 	@echo "[INST]" $(<:src/%=%)
 	@$(MKDIR) $(MKDIRFLAGS) $(dir $@)
 	@cp $< $@
@@ -46,10 +46,30 @@ clean:
 	@rm -rf include/*
 	@rm -f $(LIB)
 
-install: $(BIN) $(HEADERS) $(LIB)
-	cp $(BIN) $(PREFIX)/$(BIN_DIR)/
-	cp -r include/* $(PREFIX)/$(INCLUDE_DIR)/
-	cp $(LIB) $(PREFIX)/$(LIB_DIR)/
+install: install-dev
+install-dev: install-header install-lib
+install-all: install-header install-lib install-bin
+
+install-header: $(HEADERS)
+ifneq ($(HEADERS),)
+	@echo "[CP]  " $(HEADERS)
+	@$(MKDIR) $(MKDIRFLAGS) $(PREFIX)/$(INCLUDE_DIR)/
+	@cp -r include/* $(PREFIX)/$(INCLUDE_DIR)/
+endif
+
+install-lib: $(LIB)
+ifneq ($(LIB),)
+	@echo "[CP]  " $(LIB)
+	@$(MKDIR) $(MKDIRFLAGS) $(PREFIX)/$(LIB_DIR)/
+	@cp $(LIB) $(PREFIX)/$(LIB_DIR)/
+endif
+
+install-bin: $(BIN)
+ifneq ($(BIN),)
+	@echo "[CP]  " $(BIN)
+	@$(MKDIR) $(MKDIRFLAGS) $(PREFIX)/$(BIN_DIR)/
+	@cp $(BIN) $(PREFIX)/$(BIN_DIR)/
+endif
 
 print-%:
 	@echo $*=$($*)

@@ -1,5 +1,5 @@
-#ifndef _PARSER_H_
-#define _PARSER_H_
+#ifndef _LR_PARSER_H_
+#define _LR_PARSER_H_
 
 #include <iostream>
 #include <sstream>
@@ -382,7 +382,7 @@ template<typename symbol_type>
 void lr_parser<symbol_type>::build_follow_sets(const cf_grammar<symbol_type>& grammar) {
   bool stop(false);
   while (not stop) {
-    std::map<symbol_type, std::set<symbol_type>> followsp(follows);
+    const std::map<symbol_type, std::set<symbol_type>> followsp(follows);
 
     /*
      * Pour tous les symbols non-terminaux:
@@ -405,12 +405,15 @@ void lr_parser<symbol_type>::build_follow_sets(const cf_grammar<symbol_type>& gr
            */
           const symbol_type lhs(grammar.production_rules[j].first);
 
-          if(++it != rhs.end())
+          if(++it != rhs.end()) {
             follows[current].insert(firsts[*it].begin(),
                                     firsts[*it].end());
-          else
-            follows[current].insert(followsp[lhs].begin(),
-                                    followsp[lhs].end());
+	  } else {
+	    const auto lhs_item(followsp.find(lhs));
+	    if (lhs_item != followsp.end())
+	      follows[current].insert(lhs_item->second.begin(),
+				      lhs_item->second.end());
+	  }
         }
       }
     }
@@ -617,4 +620,4 @@ bool lr_parser<symbol_type>::is_reducible(const parser_state_type& p,
 
 
 
-#endif /* _PARSER_H_ */
+#endif /* _LR_PARSER_H_ */

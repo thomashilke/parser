@@ -26,7 +26,11 @@ parse_input_to_tree(lr_parser<typename token_source_type::symbol_type>& parser,
   state_stack.push_back(0);
 
   while(state_stack.back() != parser.accepting_state) {
-    const unsigned int terminal_id(parser.terminal_map.find(input.get().symbol)->second);
+    const auto terminal_map_item(parser.terminal_map.find(input.get().symbol));
+    if (terminal_map_item == parser.terminal_map.end())
+      throw std::string("parse error near ") + input.get().render_coordinates();
+    
+    const unsigned int terminal_id(terminal_map_item->second);
     const int action(parser.transitions_table[ state_stack.back() ][ terminal_id ]);
 
     if(action > 0) {  // shift
@@ -64,7 +68,11 @@ bool parse_input(lr_parser<typename token_source_type::symbol_type>& parser,
   state_stack.push_back(0);
 
   while(state_stack.back() != parser.accepting_state) {
-    const unsigned int terminal_id(parser.terminal_map.find(input.get().symbol)->second);
+    const auto terminal_map_item(parser.terminal_map.find(input.get().symbol));
+    if (terminal_map_item == parser.terminal_map.end())
+      throw std::string("parse error near ") + input.get().render_coordinates();
+    
+    const unsigned int terminal_id(terminal_map_item->second);
     const int action(parser.transitions_table[ state_stack.back() ][ terminal_id ]);
 
     if(action > 0) {  // shift

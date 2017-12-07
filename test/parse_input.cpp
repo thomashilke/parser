@@ -18,6 +18,8 @@ struct dummy_token {
   using symbol_type = s_type;
   
   symbol_type symbol;
+
+  std::string render_coordinates() const { return "";}
 };
 
 template<typename symbol_t>
