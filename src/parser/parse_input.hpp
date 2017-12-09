@@ -34,7 +34,7 @@ parse_input_to_tree(lr_parser<typename token_source_type::symbol_type>& parser,
     const int action(parser.transitions_table[ state_stack.back() ][ terminal_id ]);
 
     if(action > 0) {  // shift
-      node_stack.push_back(tree_factory.build_leaf(input.get()));
+      node_stack.push_back(tree_factory.build_leaf(input));
 
       state_stack.push_back(action - 1);
       input.next();
