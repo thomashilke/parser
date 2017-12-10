@@ -6,6 +6,30 @@
 #include "lr_parser.hpp"
 
 
+template<typename token_type>
+class parse_error {
+public:
+  using symbol_type = typename token_type::symbol_type;
+
+  parse_error(token_type* t, const std::vector<symbol_type>& expected_symbols)
+    : token(t), expected_symbols(expected_symbols) {}
+  ~parse_error() {
+    delete token;
+    token = nullptr;
+  }
+
+  const token_type& get_unexpected_token() const { return *token; }
+
+  const std::vector<symbol_type>& get_expected_symbols() const {
+    return expected_symbols;
+  }
+
+private:
+  token_type* token;
+  std::vector<symbol_type> expected_symbols;
+};
+
+
 template<class T>
 void pop(std::list<T>& list, unsigned int n) {
   typename std::list<T>::reverse_iterator lower_bound(list.rbegin());
@@ -18,6 +42,8 @@ typename tree_factory_type::node_type*
 parse_input_to_tree(lr_parser<typename token_source_type::symbol_type>& parser,
                     token_source_type& input,
                     tree_factory_type& tree_factory) {
+  using token_type = typename token_source_type::token_type;
+  using symbol_type = typename token_type::symbol_type;
   using node_type = typename tree_factory_type::node_type;
 
   std::list<node_type*> node_stack;
@@ -54,7 +80,16 @@ parse_input_to_tree(lr_parser<typename token_source_type::symbol_type>& parser,
       pop(state_stack, parser.rule_lengths[production_rule_id]);
       state_stack.push_back(parser.goto_table[ state_stack.back() ][ non_terminal_symbol_id ] - 1);
     } else {
-      throw std::string("parse error near ") + input.get().render_coordinates();
+      std::map<unsigned int, symbol_type> inverse_symbol_map;
+      for (const auto& item: parser.terminal_map)
+        inverse_symbol_map[item.second] = item.first;
+
+      std::vector<symbol_type> expected_symbols;
+      for (std::size_t i(0); i < parser.transitions_table[ state_stack.back() ].size(); ++i) {
+        if (parser.transitions_table[ state_stack.back() ][i] != 0)
+          expected_symbols.push_back(inverse_symbol_map[i]);
+      }
+      throw parse_error<token_type>(input.get().copy(), expected_symbols);
     }
   }
   delete node_stack.back(); //The start rule is not reduced, hence two symbols are on the stack
