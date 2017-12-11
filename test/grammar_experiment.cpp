@@ -2,7 +2,7 @@
 
 #include <lexer/lexer.hpp>
 
-#include "../src/parser/parse_input.hpp"
+#include "../src/parse_input.hpp"
 
 /*
  * Let's try to parse the following if-then-else-endif:

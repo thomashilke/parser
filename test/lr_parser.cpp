@@ -1,4 +1,4 @@
-#include "../src/parser/lr_parser.hpp"
+#include "../src/lr_parser.hpp"
 
 enum class symbol { start, eoi, number, comma, number_list };
 

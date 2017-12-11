@@ -16,20 +16,20 @@ LIB_DIR = lib/
 
 PKG_NAME = parser
 
-
-SOURCES = src/pgtool.cpp src/regex/regex.cpp src/regex/regexparser.cpp \
-	test/cf_grammar.cpp test/lr_parser.cpp test/parse_input.cpp test/parse_input_to_tree.cpp \
+SOURCES = test/cf_grammar.cpp \
+	test/lr_parser.cpp \
+	test/parse_input.cpp \
+	test/parse_input_to_tree.cpp \
 	test/grammar_experiment.cpp
 
 
 HEADERS = include/parser/parser.hpp \
-          include/parser/parser/cf_grammar.hpp \
-	  include/parser/parser/lr_parser.hpp \
-          include/parser/parser/parse_input.hpp
+          include/parser/cf_grammar.hpp \
+	  include/parser/lr_parser.hpp \
+          include/parser/parse_input.hpp
 
 BIN = bin/test_cf_grammar bin/test_lr_parser bin/test_parse_input bin/test_parse_input_to_tree bin/grammar_experiment
 
-bin/pgtool: build/src/pgtool.o build/src/regex/regex.o build/src/regex/regexparser.o
 bin/test_cf_grammar: build/test/cf_grammar.o
 bin/test_lr_parser: build/test/lr_parser.o
 bin/test_parse_input: build/test/parse_input.o

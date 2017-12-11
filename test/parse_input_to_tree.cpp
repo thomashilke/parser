@@ -2,7 +2,7 @@
 
 #include <lexer/lexer.hpp>
 
-#include "../src/parser/parse_input.hpp"
+#include "../src/parse_input.hpp"
 
 
 enum class symbol { start, eoi, number, comma, number_list };

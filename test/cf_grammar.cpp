@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../src/parser/cf_grammar.hpp"
+#include "../src/cf_grammar.hpp"
 
 enum class symbol { start, eoi, number, comma, number_list };
 
