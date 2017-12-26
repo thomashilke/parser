@@ -68,38 +68,42 @@ private:
 
 class basic_node {
 public:
+  basic_node(symbol s): s(s) {}
   virtual ~basic_node() {}
   virtual void show(std::ostream& stream, unsigned int level = 0) const = 0;
+  symbol get_symbol() const { return s; }
+  
+protected:
+  symbol s;
 };
 
 
 class node: public basic_node {
 public:
   template<typename iterator_type>
-  node(symbol s, iterator_type begin, iterator_type end): s(s), children(begin, end) {}
+  node(symbol s, iterator_type begin, iterator_type end): basic_node(s), children(begin, end) {}
 
   void show(std::ostream& stream, unsigned int level) const {
-    stream << std::string(level, ' ') << s << std::endl;
+    stream << std::string(level, ' ') << this->s << std::endl;
     for (const auto& c: children)
       c->show(stream, level + 2);
   }
+
   
 private:
-  symbol s;
   std::vector<basic_node*> children;
 };
 
 
 class leaf: public basic_node {
 public:
-  leaf(symbol s, const std::string& v): s(s), value(v) {}
+  leaf(symbol s, const std::string& v): basic_node(s), value(v) {}
 
   void show(std::ostream& stream, unsigned int level) const {
-    stream << std::string(level, ' ') << s <<" (" << value << ")" << std::endl;
+    stream << std::string(level, ' ') << this->s <<" (" << value << ")" << std::endl;
   }
   
 private:
-  symbol s;
   std::string value;
 };
 
@@ -140,7 +144,9 @@ int main() {
     dummy_token_source tokens("input.txt");
     
     tree_factory<symbol> factory;
-    basic_node* tree(parse_input_to_tree<dummy_token_source, tree_factory<symbol> >(p, tokens, factory));
+    default_error_handler<token<symbol>> handler;
+    basic_node* tree(parse_input_to_tree<dummy_token_source,
+                                         tree_factory<symbol> >(p, g, tokens, factory, handler));
     if (tree) {
       std::cout << "parse succeed" << std::endl;
       tree->show(std::cout);

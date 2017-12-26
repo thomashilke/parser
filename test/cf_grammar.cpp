@@ -24,7 +24,7 @@ int main() {
 
   g.wrap_up();
 
-  g.show(std::cout);
+  g.print(std::cout);
   
   return 0;
 }

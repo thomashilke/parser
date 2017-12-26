@@ -24,9 +24,9 @@ int main() {
   
   lr_parser<symbol> p(g);
   p.print(std::cout, g);
-  p.print_follow_sets(std::cout);
-  p.print_first_sets(std::cout);
-  p.print_configuration_set(std::cout, g);
+  //p.print_follow_sets(std::cout);
+  //p.print_first_sets(std::cout);
+  //p.print_configuration_set(std::cout, g);
 
   return 0;
 }

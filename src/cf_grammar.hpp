@@ -77,7 +77,7 @@ public:
     production_rules.push_back(std::make_pair(target, list));
   }
 
-  void show(std::ostream& stream) {
+  void print(std::ostream& stream) const {
     stream << "Set of terminal symbols: ";
     for (const auto& t: terminals)
       stream << t << " ";
@@ -91,12 +91,33 @@ public:
     stream << "Start symbol: " << start_symbol << std::endl;
     
     stream << "Production rules:" << std::endl;
+    std::size_t rule_id(0);
     for (const auto& p: production_rules) {
-      stream << "  " << p.first << " -> ";
+      stream << rule_id << ":  " << p.first << " -> ";
       for (const auto& s: p.second)
         stream << s << " ";
       stream << std::endl;
+      ++rule_id;
     }
+  }
+
+  const std::vector<production_type<symbol_type>>& get_production_rules() {
+    return production_rules;
+  }
+
+  symbol_type get_important_goal(symbol_type s) {
+    return s;
+    
+    bool done(false);
+    while (not done) {
+      done = true;
+      for (const auto& p: production_rules)
+        if (p.second.size() == 1 and p.second.front() == s) {
+          s = p.first;
+          done = false;
+        }
+    }
+    return s;
   }
   
 public:

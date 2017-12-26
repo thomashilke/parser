@@ -20,6 +20,10 @@ struct dummy_token {
   symbol_type symbol;
 
   std::string render_coordinates() const { return "";}
+
+  dummy_token<s_type>* copy() const {
+    return new dummy_token<s_type>(*this);
+  }
 };
 
 template<typename symbol_t>
@@ -60,7 +64,8 @@ int main() {
  
     dummy_token_source<symbol> tokens({symbol::number, symbol::comma, symbol::number, symbol::comma, symbol::number, symbol::eoi});
 
-    if (parse_input<dummy_token_source<symbol> >(p, tokens))
+    default_error_handler<dummy_token<symbol> > handler;
+    if (parse_input<dummy_token_source<symbol> >(p, g, tokens, handler))
       std::cout << "parse succeed" << std::endl;
     else
       std::cout << "parse failed" << std::endl;

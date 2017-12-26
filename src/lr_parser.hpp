@@ -170,6 +170,8 @@ public:
   lr_parser(const cf_grammar<symbol_type>& g);
 
   void print(std::ostream& stream, const cf_grammar<symbol_type>& grammar);
+  void print_goto_table(std::ostream& stream, const cf_grammar<symbol_type>& grammar);
+  void print_transitions_table(std::ostream& stream, const cf_grammar<symbol_type>& grammar);
   void print_follow_sets(std::ostream& stream);
   void print_first_sets(std::ostream& stream);
   void print_configuration_set(std::ostream& stream, const cf_grammar<symbol_type>& grammar);
@@ -249,6 +251,48 @@ lr_parser<symbol_type>::lr_parser(const cf_grammar<symbol_type>& g):
 }
 
 template<typename symbol_type>
+void lr_parser<symbol_type>::print_goto_table(std::ostream& stream, const cf_grammar<symbol_type>& grammar) {
+  std::vector<unsigned int> sizes(grammar.non_terminals.size(), 0);
+  stream << std::string(6, ' ');
+  for (unsigned int j(0); j < grammar.non_terminals.size(); ++j) {
+    std::ostringstream symbol_ascii; symbol_ascii << grammar.terminals[j];
+    stream << grammar.non_terminals[j] << " ";
+    sizes[j] = symbol_ascii.str().size() + 1;
+  }
+  stream << std::endl;
+  for (unsigned int i(0); i < goto_table.size(); ++i) {
+    stream << std::setw(3) << std::right << i+1 << ":  ";
+    for (unsigned int j(0); j < goto_table[0].size(); ++j)
+      stream << std::setw(sizes[j]-1) << std::right << goto_table[i][j] << " ";
+    stream << std::endl;
+  }
+  stream << std::endl;
+}
+
+template<typename symbol_type>
+void lr_parser<symbol_type>::print_transitions_table(std::ostream& stream, const cf_grammar<symbol_type>& grammar) {
+  stream << "Accepting state # is " << accepting_state + 1 << std::endl;
+
+  std::vector<unsigned int> sizes(grammar.terminals.size(), 0);
+  stream << std::setw(6) << std::string(6, ' ');
+  for (unsigned int j(0); j < grammar.terminals.size(); ++j) {
+    stream << std::setw(4) << std::right << grammar.terminals[j] << " ";
+    std::ostringstream symbol_ascii; symbol_ascii << grammar.terminals[j];
+    sizes[j] = symbol_ascii.str().size() + 1;
+    if(sizes[j] < 5)
+      sizes[j] = 5;
+  }
+  stream << std::endl;
+  for (unsigned int i(0); i < transitions_table.size(); ++i) {
+    stream << std::setw(3) << std::right << i+1 << ":  ";
+    for (unsigned int j(0); j < transitions_table[0].size(); ++j)
+      stream << std::setw(sizes[j]-1) << std::right << transitions_table[i][j] << " ";
+    stream << std::endl;
+  }
+  stream << std::endl;
+}
+
+template<typename symbol_type>
 void lr_parser<symbol_type>::print_first_sets(std::ostream& stream) {
   for (typename std::map<symbol_type, std::set<symbol_type> >::iterator first_set(firsts.begin());
        first_set != firsts.end(); ++first_set) {
@@ -291,49 +335,21 @@ void lr_parser<symbol_type>::print(std::ostream& stream,
                                    const cf_grammar<symbol_type>& grammar) {
   stream << "This is an LRParser. Here it shall print itself:" << std::endl;
 
+  stream << "> grammar: " << std::endl;
+  grammar.print(stream);
+  stream << std::endl;
+  
   stream << "> configuration set:" << std::endl;
   print_configuration_set(stream, grammar);
   stream << std::endl;
 
-  stream << "> Transition table: (accept on state #" << accepting_state + 1 << ")" << std::endl;
-  {
-    std::vector<unsigned int> sizes(grammar.terminals.size(), 0);
-    stream << std::setw(6) << std::string(6, ' ');
-    for (unsigned int j(0); j < grammar.terminals.size(); ++j) {
-      stream << std::setw(4) << std::right << grammar.terminals[j] << " ";
-      std::ostringstream symbol_ascii; symbol_ascii << grammar.terminals[j];
-      sizes[j] = symbol_ascii.str().size() + 1;
-      if(sizes[j] < 5)
-        sizes[j] = 5;
-    }
-    stream << std::endl;
-    for (unsigned int i(0); i < transitions_table.size(); ++i) {
-      stream << std::setw(3) << std::right << i+1 << ":  ";
-      for (unsigned int j(0); j < transitions_table[0].size(); ++j)
-        stream << std::setw(sizes[j]-1) << std::right << transitions_table[i][j] << " ";
-      stream << std::endl;
-    }
-    stream << std::endl;
-  }
-
+  stream << "> Transition table:" << std::endl;
+  print_transitions_table(stream, grammar);
+  stream << std::endl;
+  
   stream << "> Goto table:" << std::endl;
-  {
-    std::vector<unsigned int> sizes(grammar.non_terminals.size(), 0);
-    stream << std::string(6, ' ');
-    for (unsigned int j(0); j < grammar.non_terminals.size(); ++j) {
-      std::ostringstream symbol_ascii; symbol_ascii << grammar.terminals[j];
-      stream << grammar.non_terminals[j] << " ";
-      sizes[j] = symbol_ascii.str().size() + 1;
-    }
-    stream << std::endl;
-    for (unsigned int i(0); i < goto_table.size(); ++i) {
-      stream << std::setw(3) << std::right << i+1 << ":  ";
-      for (unsigned int j(0); j < goto_table[0].size(); ++j)
-        stream << std::setw(sizes[j]-1) << std::right << goto_table[i][j] << " ";
-      stream << std::endl;
-    }
-    stream << std::endl;
-  }
+  print_goto_table(stream, grammar);
+  stream << std::endl;
 
   stream << "> First sets:" << std::endl;
   print_first_sets(stream);

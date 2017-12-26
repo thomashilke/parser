@@ -160,14 +160,16 @@ int main() {
     g.wrap_up();
 
     lr_parser<symbol> p(g);
+    
+    p.print(std::cout, g);
  
     dummy_token_source tokens("grammar_experiment_input.txt");
     
-    tree_factory<symbol> factory;
-    basic_node* tree(parse_input_to_tree<dummy_token_source, tree_factory<symbol> >(p, tokens, factory));
+    //tree_factory<symbol> factory;
+    bool tree(parse_input_visual<dummy_token_source>(p, tokens));
     if (tree) {
       std::cout << "parse succeed" << std::endl;
-      tree->show(std::cout);
+      //tree->show(std::cout);
     } else {
       std::cout << "parse failed" << std::endl;
     }
