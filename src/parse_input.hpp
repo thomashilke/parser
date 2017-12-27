@@ -167,8 +167,10 @@ parse_input_to_tree(lr_parser<typename token_source_type::symbol_type>& parser,
           pop(state_stack, states.size() - i);
           state_stack.push_back(parser.goto_table[ state_stack.back() ][ reduction_goal_id ] - 1);
 
-
-          node_type* p(tree_factory.build_node(node_stack.end(),
+          
+          typename std::list<node_type*>::iterator start(node_stack.end());
+          std::advance(start, - (states.size() - i));
+          node_type* p(tree_factory.build_node(start,
                                                node_stack.end(),
                                                -1,
                                                reduction_goal));
