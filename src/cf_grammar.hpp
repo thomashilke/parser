@@ -105,14 +105,14 @@ public:
     return production_rules;
   }
 
-  symbol_type get_important_goal(symbol_type s) {
-    return s;
-    
+  symbol_type get_important_goal(symbol_type s, const std::set<symbol_type>& candidates) {
     bool done(false);
     while (not done) {
       done = true;
       for (const auto& p: production_rules)
-        if (p.second.size() == 1 and p.second.front() == s) {
+        if (p.second.size() == 1
+            and p.second.front() == s
+            and candidates.count(p.first)) {
           s = p.first;
           done = false;
         }
